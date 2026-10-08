@@ -1,0 +1,15 @@
+# .NET build outputs
+**/bin/
+**/obj/
+
+# Local SQLite database and sidecar files
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# IDE and local environment files
+.vs/
+.vscode/
+.env
+.env.*
+!.env.example
