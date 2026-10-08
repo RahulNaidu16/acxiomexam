@@ -14,6 +14,21 @@ The API listens on `http://localhost:5080`; health check: `GET /health`. To boot
 
 The backend allows credentialed browser requests from the common local development origins on ports 5500, 5501, and 5173. Keep the frontend and API on the same hostname (`localhost`) so the Lax/Strict cookies are sent; opening `index.html` as a `file://` URL does not provide a permitted CORS origin. Configure production origins in the `Frontend:Origins` appsettings array or with indexed environment keys such as `Frontend__Origins__0`; use HTTPS and secret bootstrap credentials.
 
+## Deploy to Railway
+
+The API includes a Dockerfile and Railway health check configuration. In Railway, create a project from the GitHub repository `RahulNaidu16/acxiomexam`, then set the service Root Directory to `/backend/AcxiomCRM.Api`. Railway builds the Dockerfile in that directory. Once deployed, generate a Railway public domain for the API.
+
+Add a persistent Railway Volume mounted at `/data`, then configure these service variables in Railway (do not commit secrets):
+
+| Variable | Value |
+| --- | --- |
+| `ConnectionStrings__Default` | `Data Source=/data/acxiomcrm.db` |
+| `Frontend__Origins__0` | `https://acxiomexam.vercel.app` |
+| `BootstrapAdmin__Email` | Your chosen admin email |
+| `BootstrapAdmin__Password` | A unique password meeting the policy above |
+
+Railway supplies `PORT` automatically. The API listens on that port and serves `GET /health` for deployment health checks. After deployment, test `https://<your-railway-domain>/health`. The current Vercel frontend remains a localStorage demo; deployment of this API alone does not connect the frontend to it.
+
 ## Authentication and CSRF
 
 Authentication uses an HttpOnly cookie. Before every state-changing request, call `GET /api/auth/csrf`, then send the returned `token` as `X-CSRF-TOKEN`; retain cookies with browser `credentials: "include"` or `curl -c`/`-b`. Login and registration are also CSRF-protected. Auth endpoints are limited to 10 requests per minute per client IP. Identity locks accounts after three failed attempts for five minutes.

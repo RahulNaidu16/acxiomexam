@@ -4,10 +4,14 @@ using AcxiomCRM.Api.Models;
 using AcxiomCRM.Api.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+var railwayPort = Environment.GetEnvironmentVariable("PORT");
+if (int.TryParse(railwayPort, out var port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 var connectionString = builder.Configuration.GetConnectionString("Default") ?? "Data Source=acxiomcrm.db";
 
 builder.Services.AddDbContext<CrmDbContext>(options => options.UseSqlite(connectionString));
@@ -76,9 +80,17 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+        Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 var app = builder.Build();
 app.UseExceptionHandler();
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseCors("frontend");
 app.UseRateLimiter();
