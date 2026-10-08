@@ -14,20 +14,21 @@ The API listens on `http://localhost:5080`; health check: `GET /health`. To boot
 
 The backend allows credentialed browser requests from the common local development origins on ports 5500, 5501, and 5173. Keep the frontend and API on the same hostname (`localhost`) so the Lax/Strict cookies are sent; opening `index.html` as a `file://` URL does not provide a permitted CORS origin. Configure production origins in the `Frontend:Origins` appsettings array or with indexed environment keys such as `Frontend__Origins__0`; use HTTPS and secret bootstrap credentials.
 
-## Deploy to Railway
+## Deploy to Render
 
-The API includes a Dockerfile and Railway health check configuration. In Railway, create a project from the GitHub repository `RahulNaidu16/acxiomexam`, then set the service Root Directory to `/backend/AcxiomCRM.Api`. Railway builds the Dockerfile in that directory. Once deployed, generate a Railway public domain for the API.
+The repository-root Dockerfile builds the API. In Render, create a Docker Web Service from `RahulNaidu16/acxiomexam`, use the `main` branch, leave Root Directory empty, set Dockerfile Path to `./Dockerfile`, and use `/health` as the health check path. Select the Free compute plan to avoid charges unless you explicitly choose a paid plan. Render supplies `PORT`; the API listens on it.
 
-Add a persistent Railway Volume mounted at `/data`, then configure these service variables in Railway (do not commit secrets):
+Set this environment variable in the Render service:
 
 | Variable | Value |
 | --- | --- |
-| `ConnectionStrings__Default` | `Data Source=/data/acxiomcrm.db` |
 | `Frontend__Origins__0` | `https://acxiomexam.vercel.app` |
-| `BootstrapAdmin__Email` | Your chosen admin email |
-| `BootstrapAdmin__Password` | A unique password meeting the policy above |
+| `BootstrapAdmin__Email` | Your chosen admin email (optional) |
+| `BootstrapAdmin__Password` | A private, unique password meeting the policy above (optional; set directly in Render, never commit it) |
 
-Railway supplies `PORT` automatically. The API listens on that port and serves `GET /health` for deployment health checks. After deployment, test `https://<your-railway-domain>/health`. The current Vercel frontend remains a localStorage demo; deployment of this API alone does not connect the frontend to it.
+**Free Render services have ephemeral storage and may spin down when idle.** The current SQLite database can be reset after a restart/redeploy, and Render persistent disks require a paid plan. Don't store real CRM data on this free deployment. For durable production data, use a persistent paid disk or migrate to a managed PostgreSQL database before using real customer records.
+
+After deployment, test `https://<your-render-domain>/health`. The current Vercel frontend remains a localStorage demo; deploying this API does not connect the frontend to it.
 
 ## Authentication and CSRF
 
